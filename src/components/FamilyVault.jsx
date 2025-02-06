@@ -44,6 +44,32 @@ function FamilyPictureVaultApp() {
     }
   }
 
+  const uploadNewPicture = (memberId) => {
+    // give code that firsts load the image from user
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newPicture = e.target.result;
+          setFamilyMembers(
+            familyMembers.map((member) =>
+              member.id === memberId
+                ? { ...member, pictures: [...member.pictures, newPicture] }
+                : member
+            )
+          );
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+
   const uploadPicture = (memberId) => {
     // This is a placeholder function. In a real app, this would handle the actual file upload.
     console.log(`Uploading picture for member ${memberId}`)
@@ -94,7 +120,7 @@ function FamilyPictureVaultApp() {
                 </div>
               </CardContent>
               <CardFooter className="bg-gray-50">
-                <Button onClick={() => uploadPicture(member.id)} className="w-full bg-blue-800 hover:bg-blue-700">
+                <Button onClick={() => uploadNewPicture(member.id)} className="w-full bg-blue-800 hover:bg-blue-700">
                   <Upload className="mr-2 h-4 w-4" /> Upload New Picture
                 </Button>
               </CardFooter>

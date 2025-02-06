@@ -5,57 +5,76 @@ use calimero_sdk::{app, env};
 #[app::state(emits = for<'a> Event<'a>)]
 #[derive(BorshDeserialize, BorshSerialize, Default)]
 #[borsh(crate = "calimero_sdk::borsh")]
-pub struct ContentShare {
-    all_content: Vec<Content>,  // Renamed to `all_content` for consistency
+pub struct ImageShare {
+    all_images: Vec<ImageEntry>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default, Serialize)]
 #[borsh(crate = "calimero_sdk::borsh")]
 #[serde(crate = "calimero_sdk::serde")]
-pub struct Content {
-    username: String,  // The user's name
-    content: String,   // The content they posted
+pub struct ImageEntry {
+    username: String,
+    images: Vec<String>,
 }
 
 #[app::event]
 pub enum Event<'a> {
-    ContentCreated {
+    ImageAdded {
         username: &'a str,
-        content: &'a str,
+        image: &'a str,
+    },
+    NameAdded {
+        username: &'a str,
     },
 }
 
 #[app::logic]
-impl ContentShare {
+impl ImageShare {
     #[app::init]
-    pub fn init() -> ContentShare {
-        ContentShare::default()  // Initialize with an empty list
+    pub fn init() -> ImageShare {
+        ImageShare::default()
     }
 
-    // This function retrieves the full list of entries (all posts)
-    pub fn get_all_entries(&self) -> &[Content] {
-        env::log("Getting all content entries.");
-        &self.all_content  // Access the renamed list `all_content`
+    pub fn get_all_entries(&self) -> &[ImageEntry] {
+        env::log("Getting all image entries.");
+        &self.all_images
     }
 
-    // This function allows a new content entry to be added with username and content
-    pub fn create_content(&mut self, username: String, content: String) -> &Content {
-        env::log(&format!("Creating content for user: {:?} with content: {:?}", username, content));
+    pub fn add_image(&mut self, username: String, image: String) -> &ImageEntry {
+        env::log(&format!("Adding image for user: {:?} with image: {:?}", username, image));
 
-        app::emit!(Event::ContentCreated {
+        app::emit!(Event::ImageAdded {
             username: &username,
-            content: &content,
+            image: &image,
         });
 
-        // Add the new entry to the list
-        self.all_content.push(Content {
-            username,
-            content,
-        });
-
-        match self.all_content.last() {
-            Some(entry) => entry,
-            None => env::unreachable(),  // Can be handled more gracefully if desired
+        // Find the entry index first
+        if let Some(index) = self.all_images.iter().position(|entry| entry.username == username) {
+            self.all_images[index].images.push(image);
+            return &self.all_images[index];
         }
+
+        // If not found, push a new entry
+        self.all_images.push(ImageEntry {
+            username: username.clone(),
+            images: vec![image],
+        });
+
+        self.all_images.last().unwrap()
+    }
+
+    pub fn add_name(&mut self, username: String) -> &ImageEntry {
+        env::log(&format!("Adding new name: {:?}", username));
+
+        app::emit!(Event::NameAdded {
+            username: &username,
+        });
+
+        self.all_images.push(ImageEntry {
+            username: username.clone(),
+            images: Vec::new(),
+        });
+
+        self.all_images.last().unwrap()
     }
 }

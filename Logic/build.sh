@@ -11,4 +11,4 @@ cargo build --target wasm32-unknown-unknown --profile app-release
 
 mkdir -p res
 
-cp target/wasm32-unknown-unknown/app-release/secure_sphere.wasm ./res/
+cp target/wasm32-unknown-unknown/app-release/vault_frame.wasm ./res/
